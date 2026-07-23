@@ -1,4 +1,4 @@
-# FinTrack Pro 🚀
+# MoneyMate 🚀
 
 > **Production-ready Full Stack Personal Finance Management Platform**  
 > AI-Powered · Secure · Beautiful · Scalable
@@ -9,7 +9,7 @@
 
 ## ✨ Overview
 
-FinTrack Pro is a modern, production-ready personal finance management platform featuring:
+MoneyMate is a modern, production-ready personal finance management platform featuring:
 
 - 📊 **Rich Analytics** – Income vs expense charts, cash flow, category breakdowns
 - 🤖 **Gemini AI Advisor** – Smart spending insights, predictions, and budget suggestions
@@ -25,7 +25,7 @@ FinTrack Pro is a modern, production-ready personal finance management platform 
 ## 🏗️ Architecture
 
 ```
-FinTrack-Pro/
+MoneyMate/
 ├── frontend/    →  React 19 + TypeScript + Vite + Tailwind + Framer Motion
 ├── backend/     →  Node.js + Express + TypeScript + MongoDB + JWT
 └── README.md

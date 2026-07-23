@@ -36,7 +36,7 @@ export default function AIAdvisorPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: "👋 Hello! I'm your **FinTrack Pro AI Financial Advisor**. I can help you with budgeting strategies, spending analysis, savings goals, and investment ideas. What would you like to know today?",
+      content: "👋 Hello! I'm your **MoneyMate AI Financial Advisor**. I can help you with budgeting strategies, spending analysis, savings goals, and investment ideas. What would you like to know today?",
       timestamp: new Date(),
     },
   ])

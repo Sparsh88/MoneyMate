@@ -34,6 +34,6 @@ export const useThemeStore = create<ThemeState>()(
         applyThemeClass(t)
       },
     }),
-    { name: 'fintrack-theme' }
+    { name: 'moneymate-theme' }
   )
 )

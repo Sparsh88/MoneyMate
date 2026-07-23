@@ -56,11 +56,11 @@ app.use(mongoSanitize());
 
 // Health Check Endpoint for Render / Uptime Monitoring
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', message: 'FinTrack Pro Backend API is healthy' });
+  res.status(200).json({ status: 'ok', message: 'MoneyMate Backend API is healthy' });
 });
 
 app.get('/', (_req, res) => {
-  res.status(200).json({ status: 'ok', message: 'FinTrack Pro API Operational' });
+  res.status(200).json({ status: 'ok', message: 'MoneyMate API Operational' });
 });
 
 // Global Rate Limiting on API routes

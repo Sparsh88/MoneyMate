@@ -32,7 +32,7 @@ const getSimulatedInsights = (transactions: any[], budgets: any[], goals: any[])
   });
   const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
 
-  return `### FinTrack Pro - AI Financial Insights
+  return `### MoneyMate - AI Financial Insights
 
 Based on your recent transaction history containing **${incomes.length} income transactions** ($${totalIncome.toFixed(2)}) and **${expenses.length} expenses** ($${totalExpense.toFixed(2)}):
 
@@ -163,7 +163,7 @@ export const chatWithAdvisor = async (
   if (!ai) {
     const lowerMsg = userMessage.toLowerCase();
     if (lowerMsg.includes('hello') || lowerMsg.includes('hi') || lowerMsg.includes('hey')) {
-      return `Hello! 👋 I'm your **FinTrack Pro AI Financial Advisor**. I can help you with:\n\n- 📊 Budgeting strategies\n- 💰 Saving tips and tricks\n- 📈 Investment guidance\n- 🎯 Goal planning\n\nWhat financial question can I help you with today?`;
+      return `Hello! 👋 I'm your **MoneyMate AI Financial Advisor**. I can help you with:\n\n- 📊 Budgeting strategies\n- 💰 Saving tips and tricks\n- 📈 Investment guidance\n- 🎯 Goal planning\n\nWhat financial question can I help you with today?`;
     }
     if (lowerMsg.includes('invest')) {
       return `Great question about investing! Here are my top recommendations:\n\n1. **Emergency Fund First**: Ensure you have 3-6 months of expenses saved before investing.\n2. **Tax-Advantaged Accounts**: Maximize contributions to tax-sheltered retirement accounts first.\n3. **Index Funds**: For long-term wealth building, low-cost broad-market index funds (e.g., S&P 500 ETFs) are historically reliable.\n4. **Diversification**: Never put all eggs in one basket — spread across asset classes.\n\n*Note: This is educational information, not certified financial advice. Consult a licensed advisor for personalized investment decisions.*`;
@@ -174,11 +174,11 @@ export const chatWithAdvisor = async (
     if (lowerMsg.includes('debt')) {
       return `For debt management, I recommend the **Debt Avalanche Method**:\n\n1. **List all debts** sorted by interest rate (highest first)\n2. **Pay minimums** on all debts\n3. **Attack the highest-rate debt** with any extra money\n4. **Roll payments** to the next debt once one is paid off\n\nThis mathematically saves the most money. Alternatively, the **Debt Snowball** (smallest balance first) provides motivational wins if you need encouragement.\n\n*Current context: ${financialContext}*`;
     }
-    return `Thanks for your question! Based on your current financial snapshot:\n\n**${financialContext}**\n\nMy advice: Focus on maintaining a positive savings rate this month. Track every expense in FinTrack Pro to identify areas where you can cut back. Small, consistent improvements compound into major financial wins over time.\n\nFeel free to ask me about budgeting, saving, investing, or debt management!`;
+    return `Thanks for your question! Based on your current financial snapshot:\n\n**${financialContext}**\n\nMy advice: Focus on maintaining a positive savings rate this month. Track every expense in MoneyMate to identify areas where you can cut back. Small, consistent improvements compound into major financial wins over time.\n\nFeel free to ask me about budgeting, saving, investing, or debt management!`;
   }
 
   try {
-    const systemInstruction = `You are a certified professional financial advisor embedded in FinTrack Pro, a personal finance platform. Help users optimize budgets, track financial goals, understand investments, and develop healthy money habits. Always be constructive, professional, and concise. The user's current financial context: ${financialContext}`;
+    const systemInstruction = `You are a certified professional financial advisor embedded in MoneyMate, a personal finance platform. Help users optimize budgets, track financial goals, understand investments, and develop healthy money habits. Always be constructive, professional, and concise. The user's current financial context: ${financialContext}`;
 
     const model = ai.getGenerativeModel({ 
       model: 'gemini-1.5-flash',

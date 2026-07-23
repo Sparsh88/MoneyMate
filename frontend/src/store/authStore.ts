@@ -65,7 +65,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'fintrack-auth',
+      name: 'moneymate-auth',
       partialize: (state) => ({ user: state.user, accessToken: state.accessToken, isAuthenticated: state.isAuthenticated }),
     }
   )

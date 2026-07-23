@@ -285,7 +285,7 @@ export const exportTransactionsCSV = async (req: AuthRequest, res: Response, nex
       .sort({ date: -1 });
 
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename=fintrack-transactions-${Date.now()}.csv`);
+    res.setHeader('Content-Disposition', `attachment; filename=moneymate-transactions-${Date.now()}.csv`);
 
     let csvContent = 'Date,Description,Type,Category,Amount,Notes\n';
     transactions.forEach((t) => {
@@ -317,7 +317,7 @@ export const exportTransactionsPDF = async (req: AuthRequest, res: Response, nex
       .sort({ date: -1 });
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=fintrack-statement-${Date.now()}.pdf`);
+    res.setHeader('Content-Disposition', `attachment; filename=moneymate-statement-${Date.now()}.pdf`);
 
     generateTransactionsPDF(res, user.name, transactions);
   } catch (error) {

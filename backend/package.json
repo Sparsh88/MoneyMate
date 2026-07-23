@@ -1,7 +1,7 @@
 {
-  "name": "fintrack-pro-backend",
+  "name": "moneymate-backend",
   "version": "1.0.0",
-  "description": "Production-ready backend API for FinTrack Pro",
+  "description": "Production-ready backend API for MoneyMate",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

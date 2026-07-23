@@ -4,8 +4,8 @@ export const connectDB = async (): Promise<void> => {
   const primaryUri = process.env.MONGODB_URI;
   const fallbackUris = [
     primaryUri,
-    'mongodb://127.0.0.1:27017/fintrack',
-    'mongodb://localhost:27017/fintrack',
+    'mongodb://127.0.0.1:27017/moneymate',
+    'mongodb://localhost:27017/moneymate',
   ].filter(Boolean) as string[];
 
   // Remove duplicates

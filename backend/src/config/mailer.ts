@@ -29,7 +29,7 @@ export const sendMail = async (to: string, subject: string, html: string): Promi
 
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"FinTrack Pro" <noreply@fintrackpro.com>',
+      from: process.env.SMTP_FROM || '"MoneyMate" <noreply@moneymate.com>',
       to,
       subject,
       html,
