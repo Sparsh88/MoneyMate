@@ -1,4 +1,4 @@
-import api from './api'
+import api, { API_BASE_URL } from './api'
 import type { Transaction, Pagination } from '../types'
 
 export interface TransactionFilters {
@@ -52,12 +52,10 @@ export const transactionService = {
   },
 
   exportCSV: () => {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
-    window.open(`${baseUrl}/transactions/export/csv`, '_blank')
+    window.open(`${API_BASE_URL}/transactions/export/csv`, '_blank')
   },
 
   exportPDF: () => {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
-    window.open(`${baseUrl}/transactions/export/pdf`, '_blank')
+    window.open(`${API_BASE_URL}/transactions/export/pdf`, '_blank')
   },
 }
