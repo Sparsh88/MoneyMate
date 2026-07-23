@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bot, Send, Loader2, Sparkles, TrendingUp, PiggyBank, Target, RefreshCw } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
 import { aiService } from '../services/aiService'
 import type { ChatMessage } from '../types'
 

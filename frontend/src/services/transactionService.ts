@@ -19,12 +19,12 @@ export const transactionService = {
     return data as { transactions: Transaction[]; pagination: Pagination }
   },
 
-  create: async (payload: Partial<Transaction> & { category: string }) => {
+  create: async (payload: Record<string, any>) => {
     const { data } = await api.post('/transactions', payload)
     return data.transaction as Transaction
   },
 
-  update: async (id: string, payload: Partial<Transaction>) => {
+  update: async (id: string, payload: Record<string, any>) => {
     const { data } = await api.put(`/transactions/${id}`, payload)
     return data.transaction as Transaction
   },
