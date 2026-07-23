@@ -1,30 +1,20 @@
 import { Response, NextFunction } from 'express';
-import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/auth';
 import { SavingsGoal } from '../models/SavingsGoal';
 import { Notification } from '../models/Notification';
 import { AppError } from '../middleware/error';
-import { DEMO_GOALS } from '../utils/demoData';
 
 export const getGoals = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(200).json({ success: true, goals: DEMO_GOALS });
-    }
-
     const userId = req.user?.id;
     const goals = await SavingsGoal.find({ user: userId }).sort({ targetDate: 1 });
-
-    if (goals.length === 0) {
-      return res.status(200).json({ success: true, goals: DEMO_GOALS });
-    }
 
     res.status(200).json({
       success: true,
       goals,
     });
   } catch (error) {
-    res.status(200).json({ success: true, goals: DEMO_GOALS });
+    next(error);
   }
 };
 
@@ -35,13 +25,6 @@ export const createGoal = async (req: AuthRequest, res: Response, next: NextFunc
 
     if (!name || !targetAmount || !targetDate) {
       return next(new AppError('Please provide name, target amount, and target date', 400));
-    }
-
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(201).json({
-        success: true,
-        goal: { _id: 'g_new', name, targetAmount: parseFloat(targetAmount), targetDate, currentAmount: currentAmount ? parseFloat(currentAmount) : 0, status: 'active' },
-      });
     }
 
     const goal = await SavingsGoal.create({
@@ -67,13 +50,6 @@ export const updateGoal = async (req: AuthRequest, res: Response, next: NextFunc
     const userId = req.user?.id;
     const { id } = req.params;
     const { name, targetAmount, targetDate, currentAmount, contribution } = req.body;
-
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(200).json({
-        success: true,
-        goal: { _id: id, name: name || 'Savings Goal', targetAmount: targetAmount || 50000, currentAmount: (currentAmount || 10000) + (contribution || 0), status: 'active' },
-      });
-    }
 
     const goal = await SavingsGoal.findOne({ _id: id, user: userId });
     if (!goal) {
@@ -126,10 +102,6 @@ export const updateGoal = async (req: AuthRequest, res: Response, next: NextFunc
 
 export const deleteGoal = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(200).json({ success: true, message: 'Savings goal deleted successfully' });
-    }
-
     const userId = req.user?.id;
     const { id } = req.params;
 
@@ -140,6 +112,6 @@ export const deleteGoal = async (req: AuthRequest, res: Response, next: NextFunc
       message: 'Savings goal deleted successfully',
     });
   } catch (error) {
-    res.status(200).json({ success: true, message: 'Savings goal deleted successfully' });
+    next(error);
   }
 };

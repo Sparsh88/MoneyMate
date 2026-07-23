@@ -12,7 +12,6 @@ import { AppError } from '../middleware/error';
 import { uploadToCloudinary } from '../config/cloudinary';
 import { sendBudgetAlertEmail } from '../services/mailService';
 import { generateTransactionsPDF } from '../services/pdfService';
-import { DEMO_TRANSACTIONS } from '../utils/demoData';
 
 // Helper to check and alert budget thresholds
 const checkBudgetAlerts = async (userId: string, categoryId: string, date: Date) => {
@@ -104,14 +103,6 @@ const checkBudgetAlerts = async (userId: string, categoryId: string, date: Date)
 export const getTransactions = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { search, type, category, startDate, endDate, page = 1, limit = 10 } = req.query;
-
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(200).json({
-        success: true,
-        transactions: DEMO_TRANSACTIONS,
-        pagination: { total: DEMO_TRANSACTIONS.length, page: 1, limit: Number(limit), totalPages: 1 },
-      });
-    }
 
     const userId = req.user?.id;
 

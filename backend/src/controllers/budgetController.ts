@@ -1,17 +1,11 @@
 import { Response, NextFunction } from 'express';
-import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/auth';
 import { Budget } from '../models/Budget';
 import { Category } from '../models/Category';
 import { AppError } from '../middleware/error';
-import { DEMO_BUDGETS } from '../utils/demoData';
 
 export const getBudgets = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(200).json({ success: true, budgets: DEMO_BUDGETS });
-    }
-
     const userId = req.user?.id;
     const { month, year } = req.query;
 
@@ -26,16 +20,12 @@ export const getBudgets = async (req: AuthRequest, res: Response, next: NextFunc
 
     const budgets = await Budget.find(query).populate('category');
 
-    if (budgets.length === 0) {
-      return res.status(200).json({ success: true, budgets: DEMO_BUDGETS });
-    }
-
     res.status(200).json({
       success: true,
       budgets,
     });
   } catch (error) {
-    res.status(200).json({ success: true, budgets: DEMO_BUDGETS });
+    next(error);
   }
 };
 
@@ -58,13 +48,6 @@ export const createOrUpdateBudget = async (req: AuthRequest, res: Response, next
 
     if (budgetMonth < 1 || budgetMonth > 12) {
       return next(new AppError('Month must be between 1 and 12', 400));
-    }
-
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(200).json({
-        success: true,
-        budget: { _id: 'b_new', category: { name: 'Budget' }, amount: budgetAmount, month: budgetMonth, year: budgetYear },
-      });
     }
 
     let categoryId = null;
@@ -95,10 +78,6 @@ export const createOrUpdateBudget = async (req: AuthRequest, res: Response, next
 
 export const deleteBudget = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(200).json({ success: true, message: 'Budget deleted successfully' });
-    }
-
     const userId = req.user?.id;
     const { id } = req.params;
 
@@ -109,6 +88,6 @@ export const deleteBudget = async (req: AuthRequest, res: Response, next: NextFu
       message: 'Budget deleted successfully',
     });
   } catch (error) {
-    res.status(200).json({ success: true, message: 'Budget deleted successfully' });
+    next(error);
   }
 };
