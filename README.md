@@ -227,7 +227,7 @@ MoneyMate/
 ## Clone Repository
 
 ```bash
-git clone https://github.com/Sparsh88
+git clone https://github.com/Sparsh88/MoneyMate.git
 ```
 
 ---
