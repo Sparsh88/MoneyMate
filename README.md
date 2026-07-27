@@ -358,7 +358,7 @@ Full Stack Developer | Computer Science Student
 
 ### Connect with me
 
-* 🌐 Portfolio: *Coming Soon*
+* 🌐 Portfolio: https://portfolio-flame-rho-29.vercel.app/
 * 💼 LinkedIn: https://linkedin.com/in/sparshchauhan08
 * 💻 GitHub: https://github.com/Sparsh88
 
