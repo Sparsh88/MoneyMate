@@ -5,6 +5,7 @@ import {
   ArrowRight, CheckCircle, BarChart2, Star, Sun, Moon,
 } from 'lucide-react'
 import { useThemeStore } from '../store/themeStore'
+import { useAuthStore } from '../store/authStore'
 
 const features = [
   { icon: BarChart2,  title: 'Smart Analytics',     desc: 'Beautiful charts showing income vs expenses, cash flow, and category spending breakdowns.' },
@@ -24,6 +25,7 @@ const stats = [
 
 export default function LandingPage() {
   const { theme, toggle } = useThemeStore()
+  const { isAuthenticated } = useAuthStore()
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-black dark:text-white overflow-x-hidden transition-colors duration-300">
@@ -57,8 +59,16 @@ export default function LandingPage() {
               </>
             )}
           </motion.button>
-          <Link to="/login" className="btn-ghost text-sm px-4 py-2">Sign In</Link>
-          <Link to="/register" className="btn-primary text-sm px-4 py-2">Get Started Free</Link>
+          {isAuthenticated ? (
+            <Link to="/dashboard" className="btn-primary text-sm px-4 py-2 flex items-center gap-1.5 shadow-glow">
+              Dashboard <ArrowRight className="w-4 h-4" />
+            </Link>
+          ) : (
+            <>
+              <Link to="/login" className="btn-ghost text-sm px-4 py-2">Sign In</Link>
+              <Link to="/register" className="btn-primary text-sm px-4 py-2">Get Started Free</Link>
+            </>
+          )}
         </div>
       </nav>
 
@@ -79,12 +89,20 @@ export default function LandingPage() {
             MoneyMate combines beautiful analytics, AI-powered insights, and smart budget management to help you build lasting financial freedom.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/register" className="btn-primary text-base px-8 py-3.5 shadow-glow">
-              Start Tracking Free <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link to="/login" className="btn-secondary text-base px-8 py-3.5">
-              Sign In
-            </Link>
+            {isAuthenticated ? (
+              <Link to="/dashboard" className="btn-primary text-base px-8 py-3.5 shadow-glow">
+                Go to Dashboard <ArrowRight className="w-5 h-5" />
+              </Link>
+            ) : (
+              <>
+                <Link to="/register" className="btn-primary text-base px-8 py-3.5 shadow-glow">
+                  Start Tracking Free <ArrowRight className="w-5 h-5" />
+                </Link>
+                <Link to="/login" className="btn-secondary text-base px-8 py-3.5">
+                  Sign In
+                </Link>
+              </>
+            )}
           </div>
         </motion.div>
 
@@ -151,9 +169,15 @@ export default function LandingPage() {
           </div>
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Ready to transform your finances?</h2>
           <p className="text-slate-600 dark:text-neutral-400 mb-8">Join thousands of people managing smarter with MoneyMate.</p>
-          <Link to="/register" className="btn-primary text-base px-10 py-3.5 shadow-glow inline-flex">
-            Create Free Account <ArrowRight className="w-5 h-5 text-white" />
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/dashboard" className="btn-primary text-base px-10 py-3.5 shadow-glow inline-flex">
+              Go to Dashboard <ArrowRight className="w-5 h-5 text-white" />
+            </Link>
+          ) : (
+            <Link to="/register" className="btn-primary text-base px-10 py-3.5 shadow-glow inline-flex">
+              Create Free Account <ArrowRight className="w-5 h-5 text-white" />
+            </Link>
+          )}
         </motion.div>
       </section>
 

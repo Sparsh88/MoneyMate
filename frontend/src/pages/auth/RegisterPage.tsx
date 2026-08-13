@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { TrendingUp, Eye, EyeOff, Loader2, UserPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../services/api'
+import { useAuthStore } from '../../store/authStore'
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -20,6 +21,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export default function RegisterPage() {
+  const { isAuthenticated, user } = useAuthStore()
   const navigate = useNavigate()
   const [showPw, setShowPw] = useState(false)
 
@@ -49,14 +51,23 @@ export default function RegisterPage() {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-gradient shadow-glow mb-4">
+          <Link to="/" className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-gradient shadow-glow mb-4 hover:scale-105 transition-transform">
             <TrendingUp className="w-7 h-7 text-white" />
-          </div>
+          </Link>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Create your account</h1>
           <p className="text-slate-600 dark:text-neutral-400 text-sm mt-1">Start managing your finances smarter with AI</p>
         </div>
 
         <div className="glass-card p-8">
+          {isAuthenticated && user && (
+            <div className="mb-5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-slate-800 dark:text-emerald-300 text-xs flex items-center justify-between gap-2">
+              <span className="truncate">Signed in as <strong>{user.name || user.email}</strong></span>
+              <Link to="/dashboard" className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex-shrink-0">
+                Dashboard →
+              </Link>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="label">Full Name</label>
