@@ -18,11 +18,18 @@ import adminRoutes from './routes/adminRoutes';
 
 const app = express();
 
+// Disable x-powered-by header
+app.disable('x-powered-by');
+
+// Enable strong ETags for HTTP 304 Not Modified caching
+app.set('etag', 'strong');
+
 // Trust Proxy for Render / Heroku / Vercel reverse proxies
 app.set('trust proxy', 1);
 
 // Security Headers
 app.use(helmet());
+
 
 // CORS Configuration
 const allowedOrigins = [

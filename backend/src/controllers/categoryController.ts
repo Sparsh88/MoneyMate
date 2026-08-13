@@ -7,10 +7,15 @@ export const getCategories = async (req: AuthRequest, res: Response, next: NextF
   try {
     const userId = req.user?.id;
 
-    // Fetch system defaults (user: null) AND user's custom categories
+    // Fetch system defaults (user: null) AND user's custom categories with projection and lean()
     const categories = await Category.find({
       $or: [{ user: null }, { user: userId }],
-    }).sort({ name: 1 });
+    })
+      .select('name type icon color user')
+      .sort({ name: 1 })
+      .lean();
+
+    res.setHeader('Cache-Control', 'private, max-age=60, stale-while-revalidate=300');
 
     res.status(200).json({
       success: true,
@@ -20,6 +25,7 @@ export const getCategories = async (req: AuthRequest, res: Response, next: NextF
     next(error);
   }
 };
+
 
 export const createCategory = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

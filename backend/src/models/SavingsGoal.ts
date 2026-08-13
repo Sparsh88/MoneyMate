@@ -24,5 +24,7 @@ const SavingsGoalSchema = new Schema<ISavingsGoal>(
 );
 
 SavingsGoalSchema.index({ user: 1, targetDate: 1 });
+SavingsGoalSchema.index({ user: 1, status: 1, targetDate: 1 });
 
 export const SavingsGoal = model<ISavingsGoal>('SavingsGoal', SavingsGoalSchema);
+

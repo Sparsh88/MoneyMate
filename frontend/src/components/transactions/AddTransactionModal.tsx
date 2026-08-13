@@ -34,7 +34,9 @@ export default function AddTransactionModal({ open, onClose, initial }: Props) {
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: categoryService.getAll,
+    staleTime: 5 * 60 * 1000,
   })
+
 
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),

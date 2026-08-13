@@ -127,29 +127,34 @@ export const getTransactions = async (req: AuthRequest, res: Response, next: Nex
     }
 
     const skipNum = (Number(page) - 1) * Number(limit);
+    const limitNum = Math.min(Math.max(Number(limit) || 10, 1), 100);
 
-    const transactions = await Transaction.find(query)
-      .populate('category')
-      .sort({ date: -1, createdAt: -1 })
-      .skip(skipNum)
-      .limit(Number(limit));
-
-    const total = await Transaction.countDocuments(query);
+    const [transactions, total] = await Promise.all([
+      Transaction.find(query)
+        .select('amount type category date description receiptUrl isRecurring notes createdAt')
+        .populate('category', 'name icon color type')
+        .sort({ date: -1, createdAt: -1 })
+        .skip(skipNum)
+        .limit(limitNum)
+        .lean(),
+      Transaction.countDocuments(query),
+    ]);
 
     res.status(200).json({
       success: true,
       transactions,
       pagination: {
         page: Number(page),
-        limit: Number(limit),
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / Number(limit)),
+        pages: Math.ceil(total / limitNum),
       },
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 export const createTransaction = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -272,8 +277,10 @@ export const exportTransactionsCSV = async (req: AuthRequest, res: Response, nex
   try {
     const userId = req.user?.id;
     const transactions = await Transaction.find({ user: userId })
-      .populate('category')
-      .sort({ date: -1 });
+      .select('date description type category amount notes')
+      .populate('category', 'name')
+      .sort({ date: -1 })
+      .lean();
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=moneymate-transactions-${Date.now()}.csv`);
@@ -281,7 +288,7 @@ export const exportTransactionsCSV = async (req: AuthRequest, res: Response, nex
     let csvContent = 'Date,Description,Type,Category,Amount,Notes\n';
     transactions.forEach((t) => {
       const dateStr = new Date(t.date).toLocaleDateString();
-      const desc = t.description.replace(/"/g, '""');
+      const desc = (t.description || '').replace(/"/g, '""');
       const type = t.type;
       const cat = (t.category as any)?.name || 'Uncategorized';
       const amt = t.amount;
@@ -298,14 +305,18 @@ export const exportTransactionsCSV = async (req: AuthRequest, res: Response, nex
 export const exportTransactionsPDF = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
-    const user = await User.findById(userId);
+    const [user, transactions] = await Promise.all([
+      User.findById(userId).select('name').lean(),
+      Transaction.find({ user: userId })
+        .select('date description type category amount notes')
+        .populate('category', 'name')
+        .sort({ date: -1 })
+        .lean(),
+    ]);
+
     if (!user) {
       return next(new AppError('User not found', 404));
     }
-
-    const transactions = await Transaction.find({ user: userId })
-      .populate('category')
-      .sort({ date: -1 });
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=moneymate-statement-${Date.now()}.pdf`);
@@ -315,6 +326,7 @@ export const exportTransactionsPDF = async (req: AuthRequest, res: Response, nex
     next(error);
   }
 };
+
 
 export const importTransactionsCSV = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

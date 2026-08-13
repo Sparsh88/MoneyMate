@@ -10,11 +10,14 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 30 * 1000,
+      staleTime: 60 * 1000, // 1 minute fresh time by default
+      gcTime: 10 * 60 * 1000, // 10 minutes cache retention
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
     },
   },
 })
+
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

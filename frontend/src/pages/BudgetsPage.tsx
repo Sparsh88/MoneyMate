@@ -31,7 +31,9 @@ export default function BudgetsPage() {
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: categoryService.getAll,
+    staleTime: 5 * 60 * 1000,
   })
+
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),

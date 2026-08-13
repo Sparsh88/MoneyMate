@@ -7,29 +7,28 @@ import { AppError } from '../middleware/error';
 
 export const getPlatformStats = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalTransactions = await Transaction.countDocuments();
-    const openTickets = await SupportTicket.countDocuments({ status: 'open' });
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Aggregate total transaction volume (inflow + outflow)
-    const volumeSummary = await Transaction.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalVolume: { $sum: '$amount' },
+    // Run all admin stat queries in parallel
+    const [totalUsers, totalTransactions, openTickets, volumeSummary, activeUsersThisMonth] = await Promise.all([
+      User.countDocuments(),
+      Transaction.countDocuments(),
+      SupportTicket.countDocuments({ status: 'open' }),
+      Transaction.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalVolume: { $sum: '$amount' },
+          },
         },
-      },
+      ]),
+      Transaction.distinct('user', {
+        date: { $gte: startOfMonth },
+      }),
     ]);
 
     const totalVolume = volumeSummary[0]?.totalVolume || 0;
-
-    // Monthly platform transaction growth (just some analytics stats)
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
-    const activeUsersThisMonth = await Transaction.distinct('user', {
-      date: { $gte: startOfMonth },
-    });
 
     res.status(200).json({
       success: true,
@@ -49,30 +48,34 @@ export const getPlatformStats = async (req: AuthRequest, res: Response, next: Ne
 export const getUsers = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { page = 1, limit = 10 } = req.query;
-    const skipNum = (Number(page) - 1) * Number(limit);
+    const limitNum = Math.min(Math.max(Number(limit) || 10, 1), 100);
+    const skipNum = (Number(page) - 1) * limitNum;
 
-    const users = await User.find()
-      .select('-passwordHash -refreshToken -verificationToken -resetPasswordToken')
-      .sort({ createdAt: -1 })
-      .skip(skipNum)
-      .limit(Number(limit));
-
-    const total = await User.countDocuments();
+    const [users, total] = await Promise.all([
+      User.find()
+        .select('-passwordHash -refreshToken -verificationToken -resetPasswordToken')
+        .sort({ createdAt: -1 })
+        .skip(skipNum)
+        .limit(limitNum)
+        .lean(),
+      User.countDocuments(),
+    ]);
 
     res.status(200).json({
       success: true,
       users,
       pagination: {
         page: Number(page),
-        limit: Number(limit),
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / Number(limit)),
+        pages: Math.ceil(total / limitNum),
       },
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 export const updateUserStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -120,7 +123,8 @@ export const getTickets = async (req: AuthRequest, res: Response, next: NextFunc
   try {
     const tickets = await SupportTicket.find()
       .populate('user', 'name email avatar')
-      .sort({ status: 1, createdAt: -1 });
+      .sort({ status: 1, createdAt: -1 })
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -130,6 +134,7 @@ export const getTickets = async (req: AuthRequest, res: Response, next: NextFunc
     next(error);
   }
 };
+
 
 export const createTicket = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

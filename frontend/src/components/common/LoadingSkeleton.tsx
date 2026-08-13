@@ -24,6 +24,35 @@ export function SkeletonChart({ className = '' }: { className?: string }) {
   return <div className={`skeleton rounded-2xl ${className}`} style={{ height: 280 }} />
 }
 
+export function SkeletonGrid({ count = 4, className = '' }: { count?: number; className?: string }) {
+  return (
+    <div className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 ${className}`}>
+      {Array.from({ length: count }).map((_, i) => (
+        <SkeletonCard key={i} />
+      ))}
+    </div>
+  )
+}
+
+export function PageFallback() {
+  return (
+    <div className="space-y-6 animate-pulse p-4 sm:p-6 max-w-7xl mx-auto w-full">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="skeleton h-7 w-48 rounded-lg" />
+          <div className="skeleton h-4 w-72 rounded-md" />
+        </div>
+        <div className="skeleton h-10 w-36 rounded-xl" />
+      </div>
+      <SkeletonGrid count={4} />
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+        <div className="skeleton h-72 rounded-2xl xl:col-span-3" />
+        <div className="skeleton h-72 rounded-2xl xl:col-span-2" />
+      </div>
+    </div>
+  )
+}
+
 export default function LoadingSkeleton({ rows = 5, className = '' }: LoadingSkeletonProps) {
   return (
     <div className={`space-y-1 ${className}`}>
@@ -33,3 +62,4 @@ export default function LoadingSkeleton({ rows = 5, className = '' }: LoadingSke
     </div>
   )
 }
+

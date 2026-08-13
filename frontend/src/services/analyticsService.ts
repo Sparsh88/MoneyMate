@@ -8,7 +8,7 @@ export const analyticsService = {
   },
   getCategorySpending: async () => {
     const { data } = await api.get('/analytics/category')
-    return data.categorySpending as CategorySpend[]
+    return (data.categorySpending ?? data.data ?? []) as CategorySpend[]
   },
   getTrends: async () => {
     const { data } = await api.get('/analytics/trends')
@@ -16,6 +16,7 @@ export const analyticsService = {
   },
   getCashFlow: async () => {
     const { data } = await api.get('/analytics/cashflow')
-    return data.cashFlow as CashFlowPoint[]
+    return (data.cashFlow ?? data.data ?? []) as CashFlowPoint[]
   },
 }
+

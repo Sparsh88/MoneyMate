@@ -18,7 +18,10 @@ export const getBudgets = async (req: AuthRequest, res: Response, next: NextFunc
     if (!query.month) query.month = currentDate.getMonth() + 1;
     if (!query.year) query.year = currentDate.getFullYear();
 
-    const budgets = await Budget.find(query).populate('category');
+    const budgets = await Budget.find(query)
+      .select('category amount month year')
+      .populate('category', 'name icon color type')
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -28,6 +31,7 @@ export const getBudgets = async (req: AuthRequest, res: Response, next: NextFunc
     next(error);
   }
 };
+
 
 export const createOrUpdateBudget = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

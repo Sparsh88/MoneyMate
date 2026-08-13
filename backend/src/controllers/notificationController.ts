@@ -6,7 +6,11 @@ import { AppError } from '../middleware/error';
 export const getNotifications = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
-    const notifications = await Notification.find({ user: userId }).sort({ createdAt: -1 });
+    const notifications = await Notification.find({ user: userId })
+      .select('title message type read createdAt')
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -16,6 +20,7 @@ export const getNotifications = async (req: AuthRequest, res: Response, next: Ne
     next(error);
   }
 };
+
 
 export const markNotificationRead = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

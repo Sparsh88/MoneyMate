@@ -31,9 +31,11 @@ const TransactionSchema = new Schema<ITransaction>(
   { timestamps: true }
 );
 
-// Compound indexes
-TransactionSchema.index({ user: 1, date: -1 });
-TransactionSchema.index({ user: 1, category: 1 });
-TransactionSchema.index({ user: 1, type: 1 });
+// High-performance compound indexes for queries and aggregations
+TransactionSchema.index({ user: 1, date: -1, createdAt: -1 });
+TransactionSchema.index({ user: 1, type: 1, date: -1 });
+TransactionSchema.index({ user: 1, category: 1, type: 1, date: -1 });
+TransactionSchema.index({ user: 1, isRecurring: 1 });
 
 export const Transaction = model<ITransaction>('Transaction', TransactionSchema);
+

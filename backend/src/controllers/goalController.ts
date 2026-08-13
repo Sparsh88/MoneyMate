@@ -7,7 +7,10 @@ import { AppError } from '../middleware/error';
 export const getGoals = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
-    const goals = await SavingsGoal.find({ user: userId }).sort({ targetDate: 1 });
+    const goals = await SavingsGoal.find({ user: userId })
+      .select('name targetAmount currentAmount targetDate status createdAt')
+      .sort({ targetDate: 1 })
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -17,6 +20,7 @@ export const getGoals = async (req: AuthRequest, res: Response, next: NextFuncti
     next(error);
   }
 };
+
 
 export const createGoal = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
