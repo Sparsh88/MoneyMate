@@ -1,0 +1,16 @@
+{
+  "name": "moneymate",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MoneyMate - AI Powered Personal Finance Management Platform",
+  "scripts": {
+    "build": "npm --prefix backend run build",
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "dev:frontend": "npm --prefix frontend run dev"
+  },
+  "keywords": [],
+  "author": "Sparsh Chauhan",
+  "license": "MIT"
+}

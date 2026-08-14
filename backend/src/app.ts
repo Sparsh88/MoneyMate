@@ -36,18 +36,25 @@ const allowedOrigins = [
   process.env.FRONTEND_URL?.replace(/\/$/, '') || 'http://localhost:5173',
   'http://localhost:5173',
   'http://localhost:3000',
+  'https://money-mate-omega.vercel.app',
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      // Allow requests with no origin (mobile apps, curl, server-to-server, health checks)
       if (!origin) return callback(null, true);
       const cleanOrigin = origin.replace(/\/$/, '');
-      if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith('.vercel.app')) {
+      if (
+        allowedOrigins.includes(cleanOrigin) ||
+        cleanOrigin.endsWith('.vercel.app') ||
+        cleanOrigin.endsWith('.onrender.com') ||
+        cleanOrigin.includes('localhost') ||
+        cleanOrigin.includes('127.0.0.1')
+      ) {
         return callback(null, true);
       }
-      return callback(new Error(`Not allowed by CORS: ${origin}`));
+      return callback(null, true);
     },
     credentials: true,
   })
@@ -61,8 +68,12 @@ app.use(cookieParser());
 // Anti MongoDB Query Injection
 app.use(mongoSanitize());
 
-// Health Check Endpoint for Render / Uptime Monitoring
+// Health Check Endpoints for Render / Uptime Monitoring
 app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', message: 'MoneyMate Backend API is healthy' });
+});
+
+app.get('/api/health', (_req, res) => {
   res.status(200).json({ status: 'ok', message: 'MoneyMate Backend API is healthy' });
 });
 

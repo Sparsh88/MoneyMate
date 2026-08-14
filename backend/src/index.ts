@@ -11,6 +11,7 @@ import { Notification } from './models/Notification';
 import { User } from './models/User';
 
 const PORT = process.env.PORT || 5000;
+const HOST = '0.0.0.0';
 
 // Background Worker to process recurring transactions
 const processRecurringTransactions = async () => {
@@ -86,19 +87,57 @@ const processRecurringTransactions = async () => {
 };
 
 const startServer = async () => {
-  // Connect to Database
-  await connectDB();
+  try {
+    // Start HTTP server on 0.0.0.0 to satisfy Render / cloud port detection immediately
+    const server = app.listen(Number(PORT), HOST, () => {
+      console.log(`MoneyMate Backend running in ${process.env.NODE_ENV || 'development'} mode on http://${HOST}:${PORT}`);
+      console.log(`Health check endpoints: http://${HOST}:${PORT}/health and http://${HOST}:${PORT}/api/health`);
+    });
 
-  // Listen
-  app.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-    
-    // Run recurring transactions worker on startup
-    processRecurringTransactions();
-    
-    // Run worker every 12 hours
-    setInterval(processRecurringTransactions, 12 * 60 * 60 * 1000);
-  });
+    // Connect to Database asynchronously without blocking server port detection
+    connectDB()
+      .then(() => {
+        console.log('[Startup] MongoDB initialization completed.');
+        // Run recurring transactions worker on startup
+        processRecurringTransactions();
+        // Run worker every 12 hours
+        setInterval(processRecurringTransactions, 12 * 60 * 60 * 1000);
+      })
+      .catch((dbError) => {
+        console.error('[Startup] MongoDB connection error:', dbError);
+      });
+
+    // Process termination handlers
+    const shutdown = (signal: string) => {
+      console.log(`[Shutdown] Received ${signal}. Closing server gracefully...`);
+      server.close(async () => {
+        try {
+          if (mongoose.connection.readyState === 1) {
+            await mongoose.connection.close();
+            console.log('[Shutdown] MongoDB connection closed.');
+          }
+        } catch (err) {
+          console.error('[Shutdown] Error during MongoDB disconnection:', err);
+        }
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+  } catch (error) {
+    console.error('Server startup failed critically:', error);
+    process.exit(1);
+  }
 };
+
+// Global unhandled error handlers
+process.on('unhandledRejection', (reason: any) => {
+  console.error('[Process] Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (error: Error) => {
+  console.error('[Process] Uncaught Exception:', error);
+});
 
 startServer();

@@ -26,14 +26,22 @@ export const connectDB = async (): Promise<void> => {
 
   cachedPromise = (async () => {
     const primaryUri = process.env.MONGODB_URI;
-    const fallbackUris = [
-      primaryUri,
-      'mongodb://127.0.0.1:27017/moneymate',
-      'mongodb://localhost:27017/moneymate',
-    ].filter(Boolean) as string[];
+    const isProd = process.env.NODE_ENV === 'production';
+    const fallbackUris = isProd
+      ? [primaryUri].filter(Boolean) as string[]
+      : [
+          primaryUri,
+          'mongodb://127.0.0.1:27017/moneymate',
+          'mongodb://localhost:27017/moneymate',
+        ].filter(Boolean) as string[];
 
     // Remove duplicates
     const uniqueUris = Array.from(new Set(fallbackUris));
+
+    if (uniqueUris.length === 0) {
+      console.warn('[DB] No MONGODB_URI configured. Running in Fallback Demo Mode.');
+      return;
+    }
 
     for (const uri of uniqueUris) {
       try {
@@ -48,8 +56,9 @@ export const connectDB = async (): Promise<void> => {
       }
     }
 
-    console.error('[DB] WARNING: Could not connect to any MongoDB instance (Atlas or Local).');
-    console.error('[DB] The backend will remain active in Fallback Demo Mode so you can still log in and test the application.');
+    console.error('[DB] WARNING: Could not connect to MongoDB Atlas database.');
+    console.error('[DB] Please verify MONGODB_URI in Render environment variables and ensure MongoDB Atlas IP Access List allows 0.0.0.0/0.');
+    console.error('[DB] The backend will remain active in Fallback Demo Mode so the service stays alive.');
   })();
 
   try {
