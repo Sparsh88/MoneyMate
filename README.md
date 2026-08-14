@@ -246,3 +246,18 @@ npm run dev
 ```
 
 The application will be accessible locally at `http://localhost:5173`.
+
+---
+
+## Author
+
+- **Sparsh Chauhan**
+  - GitHub: [@Sparsh88](https://github.com/Sparsh88)
+  - Email: [sparshchauhan050@gmail.com](mailto:sparshchauhan050@gmail.com)
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [package.json](package.json) file for details.
+
