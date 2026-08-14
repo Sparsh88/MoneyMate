@@ -256,8 +256,3 @@ The application will be accessible locally at `http://localhost:5173`.
   - Email: [sparshchauhan050@gmail.com](mailto:sparshchauhan050@gmail.com)
 
 ---
-
-## License
-
-This project is licensed under the MIT License - see the [package.json](package.json) file for details.
-
