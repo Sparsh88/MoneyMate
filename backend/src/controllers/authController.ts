@@ -11,12 +11,16 @@ import { isValidEmail, isValidPassword } from '../utils/validators';
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
+export const ADMIN_EMAIL = 'sparshchauhan050@gmail.com';
+export const ADMIN_PASS = 'Sp@080806';
+
 const createDemoUserObject = (email: string, name?: string): any => {
   const cleanEmail = email.toLowerCase().trim();
-  const userName = name || cleanEmail.split('@')[0] || 'Demo User';
-  const role = cleanEmail.includes('admin') ? 'admin' : 'user';
+  const isAdmin = cleanEmail === ADMIN_EMAIL.toLowerCase().trim();
+  const userName = isAdmin ? (name || 'Sparsh Chauhan') : (name || cleanEmail.split('@')[0] || 'User');
+  const role = isAdmin ? 'admin' : 'user';
   return {
-    _id: '60c72b2f9b1d8b001c8e4f1a',
+    _id: isAdmin ? '60c72b2f9b1d8b001c8e4f10' : '60c72b2f9b1d8b001c8e4f1a',
     name: userName,
     email: cleanEmail,
     role: role as 'user' | 'admin',
@@ -25,7 +29,12 @@ const createDemoUserObject = (email: string, name?: string): any => {
     status: 'active' as 'active',
     refreshToken: '',
     save: async () => {},
-    comparePassword: async () => true,
+    comparePassword: async (pwd: string) => {
+      if (isAdmin) {
+        return pwd === ADMIN_PASS;
+      }
+      return true;
+    },
   };
 };
 
@@ -33,7 +42,7 @@ const generateAccessToken = (user: IUser | any): string => {
   const secret = process.env.JWT_ACCESS_SECRET || 'super_secret_access_token_1234567890';
   const expiresIn = (process.env.JWT_ACCESS_EXPIRY || '15m') as any;
   return jwt.sign(
-    { id: user._id || user.id, role: user.role || 'user' },
+    { id: user._id || user.id, role: user.role || 'user', email: user.email },
     secret,
     { expiresIn }
   );
@@ -106,7 +115,8 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     }
 
     if (isDbConnected()) {
-      const userExists = await User.findOne({ email: email.toLowerCase().trim() });
+      const cleanEmail = email.toLowerCase().trim();
+      const userExists = await User.findOne({ email: cleanEmail });
       if (userExists) {
         return next(new AppError('Email already registered', 400));
       }
@@ -117,10 +127,14 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       const verificationToken = crypto.randomBytes(32).toString('hex');
       const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
+      // Only sparshchauhan050@gmail.com can receive admin role
+      const role = cleanEmail === ADMIN_EMAIL.toLowerCase().trim() ? 'admin' : 'user';
+
       const user = await User.create({
         name,
-        email: email.toLowerCase().trim(),
+        email: cleanEmail,
         passwordHash,
+        role,
         verificationToken,
         verificationTokenExpiry,
         isVerified: true, // Auto-verify for frictionless login
@@ -152,8 +166,10 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       return next(new AppError('Please provide email and password', 400));
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+
     if (isDbConnected()) {
-      const user = await User.findOne({ email: email.toLowerCase().trim() });
+      const user = await User.findOne({ email: cleanEmail });
       if (!user) {
         return next(new AppError('Invalid credentials', 401));
       }
@@ -167,9 +183,18 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         return next(new AppError('Invalid credentials', 401));
       }
 
+      // Ensure designated admin email always retains admin role
+      if (cleanEmail === ADMIN_EMAIL.toLowerCase().trim() && user.role !== 'admin') {
+        user.role = 'admin';
+        await user.save();
+      }
+
       return sendTokenResponse(user, 200, res);
     } else {
       // Demo Fallback Mode when MongoDB is unreachable
+      if (cleanEmail === ADMIN_EMAIL.toLowerCase().trim() && password !== ADMIN_PASS) {
+        return next(new AppError('Invalid credentials', 401));
+      }
       console.log('[Auth] Database disconnected: Logging user in with Demo Fallback Session');
       const demoUser = createDemoUserObject(email);
       return sendTokenResponse(demoUser, 200, res);
@@ -298,7 +323,8 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
       }
     }
 
-    const demoUser = createDemoUserObject('user@example.com');
+    const authEmail = (req as any).user?.email || 'user@moneymate.com';
+    const demoUser = createDemoUserObject(authEmail);
     sendTokenResponse(demoUser, 200, res);
   } catch (error) {
     return next(new AppError('Invalid or expired refresh token', 401));
@@ -380,13 +406,16 @@ export const getMe = async (req: Request, res: Response, next: NextFunction) => 
       }
     }
 
+    const reqEmail = authReq.user.email || (authReq.user.role === 'admin' ? ADMIN_EMAIL : 'user@moneymate.com');
+    const isAdmin = authReq.user.role === 'admin' && reqEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
     res.status(200).json({
       success: true,
       user: {
         id: authReq.user.id,
-        name: 'Demo User',
-        email: 'user@example.com',
-        role: authReq.user.role || 'user',
+        name: isAdmin ? 'Sparsh Chauhan' : (reqEmail.split('@')[0] || 'User'),
+        email: reqEmail,
+        role: isAdmin ? 'admin' : 'user',
         avatar: '',
         isVerified: true,
         status: 'active',

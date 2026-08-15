@@ -6,6 +6,7 @@ export interface AuthRequest extends Request {
   user?: {
     id: string;
     role: 'user' | 'admin';
+    email?: string;
   };
 }
 
@@ -26,11 +27,12 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
     const decoded = jwt.verify(
       token,
       process.env.JWT_ACCESS_SECRET || 'super_secret_access_token_1234567890'
-    ) as { id: string; role: 'user' | 'admin' };
+    ) as { id: string; role: 'user' | 'admin'; email?: string };
 
     req.user = {
       id: decoded.id,
       role: decoded.role,
+      email: decoded.email,
     };
     next();
   } catch (error) {

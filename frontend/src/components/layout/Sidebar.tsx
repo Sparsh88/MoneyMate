@@ -98,7 +98,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           </NavLink>
         ))}
 
-        {user?.role === 'admin' && (
+        {user?.role === 'admin' && user?.email?.toLowerCase().trim() === 'sparshchauhan050@gmail.com' && (
           <NavLink
             to="/admin"
             className={({ isActive }) =>

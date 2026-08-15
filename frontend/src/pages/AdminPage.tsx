@@ -5,11 +5,19 @@ import toast from 'react-hot-toast'
 import api from '../services/api'
 import { format } from 'date-fns'
 
+import { Navigate } from 'react-router-dom'
+import { useAuthStore } from '../store/authStore'
+
 const formatCurrency = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(n)
 
 export default function AdminPage() {
+  const { user } = useAuthStore()
   const qc = useQueryClient()
+
+  if (user?.role !== 'admin' || user?.email?.toLowerCase().trim() !== 'sparshchauhan050@gmail.com') {
+    return <Navigate to="/dashboard" replace />
+  }
 
   const { data: statsData } = useQuery({
     queryKey: ['admin', 'stats'],

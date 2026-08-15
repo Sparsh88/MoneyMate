@@ -9,6 +9,7 @@ import { RecurringTransaction } from './models/RecurringTransaction';
 import { Transaction } from './models/Transaction';
 import { Notification } from './models/Notification';
 import { User } from './models/User';
+import { ensureAdminAccount } from './utils/initAdmin';
 
 const PORT = process.env.PORT || 5000;
 const HOST = '0.0.0.0';
@@ -98,6 +99,8 @@ const startServer = async () => {
     connectDB()
       .then(() => {
         console.log('[Startup] MongoDB initialization completed.');
+        // Ensure the dedicated admin account exists and is synchronized
+        ensureAdminAccount().catch((err) => console.error('[Admin] Error on startup ensureAdminAccount:', err));
         // Run recurring transactions worker on startup
         processRecurringTransactions();
         // Run worker every 12 hours
