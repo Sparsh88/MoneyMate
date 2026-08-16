@@ -2,6 +2,16 @@ import api from './api'
 import type { DashboardSummary, CategorySpend, TrendPoint, BudgetComparison, CashFlowPoint } from '../types'
 
 export const analyticsService = {
+  getDashboardData: async () => {
+    const { data } = await api.get('/analytics/dashboard')
+    return data as {
+      summary: DashboardSummary
+      recentTransactions: any[]
+      categorySpending: CategorySpend[]
+      incomeVsExpense: TrendPoint[]
+      budgetComparison: BudgetComparison[]
+    }
+  },
   getSummary: async () => {
     const { data } = await api.get('/analytics/summary')
     return data as { summary: DashboardSummary; recentTransactions: any[] }
@@ -19,4 +29,5 @@ export const analyticsService = {
     return (data.cashFlow ?? data.data ?? []) as CashFlowPoint[]
   },
 }
+
 

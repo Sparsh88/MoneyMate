@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
+import zlib from 'zlib';
 import { errorHandler } from './middleware/error';
 import { apiLimiter } from './middleware/rateLimiter';
 import authRoutes from './routes/authRoutes';
@@ -29,6 +30,39 @@ app.set('trust proxy', 1);
 
 // Security Headers
 app.use(helmet());
+
+// Native high-performance gzip compression middleware (> 1KB payload compression)
+app.use((req, res, next) => {
+  const acceptEncoding = (req.headers['accept-encoding'] as string) || '';
+  if (!acceptEncoding.includes('gzip') || req.method === 'HEAD') {
+    return next();
+  }
+
+  const originalSend = res.send.bind(res);
+  res.send = function (body: any) {
+    if (res.headersSent) return originalSend(body);
+
+    const payload = typeof body === 'string' ? body : Buffer.isBuffer(body) ? body : JSON.stringify(body);
+    const byteLength = Buffer.byteLength(payload);
+
+    if (byteLength > 1024) {
+      zlib.gzip(Buffer.from(payload), (err, compressed) => {
+        if (!err && compressed) {
+          res.setHeader('Content-Encoding', 'gzip');
+          if (!res.getHeader('Content-Type')) {
+            res.setHeader('Content-Type', typeof body === 'object' ? 'application/json; charset=utf-8' : 'text/plain; charset=utf-8');
+          }
+          res.removeHeader('Content-Length');
+          return originalSend(compressed);
+        }
+        return originalSend(body);
+      });
+      return res;
+    }
+    return originalSend(body);
+  };
+  next();
+});
 
 
 // CORS Configuration

@@ -30,24 +30,18 @@ export default function DashboardPage() {
   const { user } = useAuthStore()
   const [addOpen, setAddOpen] = useState(false)
 
-  const { data: summaryData, isLoading: loadingSummary } = useQuery({
-    queryKey: ['analytics', 'summary'],
-    queryFn: analyticsService.getSummary,
+  const { data: dashboardData, isLoading } = useQuery({
+    queryKey: ['analytics', 'dashboard'],
+    queryFn: analyticsService.getDashboardData,
+    staleTime: 2 * 60 * 1000,
     refetchInterval: 60000,
   })
 
-  const { data: categoryData, isLoading: loadingCategory } = useQuery({
-    queryKey: ['analytics', 'category'],
-    queryFn: analyticsService.getCategorySpending,
-  })
+  const s = dashboardData?.summary
+  const recentTransactions = dashboardData?.recentTransactions ?? []
+  const categoryData = dashboardData?.categorySpending ?? []
+  const trendsData = dashboardData?.incomeVsExpense ?? []
 
-  const { data: trendsData, isLoading: loadingTrends } = useQuery({
-    queryKey: ['analytics', 'trends'],
-    queryFn: analyticsService.getTrends,
-  })
-
-  const s = summaryData?.summary
-  const recentTransactions = summaryData?.recentTransactions ?? []
 
   return (
     <div className="space-y-6">
@@ -69,7 +63,7 @@ export default function DashboardPage() {
 
       {/* Stat Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {loadingSummary ? (
+        {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
         ) : (
           <>
@@ -87,18 +81,18 @@ export default function DashboardPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.1 }}
           className="card p-4 sm:p-6 xl:col-span-3"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">Income vs Expenses</h2>
             <span className="text-xs text-slate-500 dark:text-neutral-400">Last 6 months</span>
           </div>
-          {loadingTrends ? (
+          {isLoading ? (
             <SkeletonChart />
           ) : (
             <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={trendsData?.incomeVsExpense ?? []} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
+              <AreaChart data={trendsData ?? []} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
                 <defs>
                   <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
@@ -128,14 +122,14 @@ export default function DashboardPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.15 }}
           className="card xl:col-span-2"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">Spending by Category</h2>
             <span className="text-xs text-slate-500 dark:text-neutral-400">This month</span>
           </div>
-          {loadingCategory ? (
+          {isLoading ? (
             <SkeletonChart />
           ) : categoryData && categoryData.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
@@ -173,7 +167,7 @@ export default function DashboardPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.2 }}
         className="card"
       >
         <div className="flex items-center justify-between mb-4">
@@ -183,11 +177,12 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {loadingSummary ? (
+        {isLoading ? (
           <div className="space-y-1">
             {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
           </div>
         ) : recentTransactions.length > 0 ? (
+
           <div className="divide-y divide-slate-200 dark:divide-neutral-800">
             {recentTransactions.map((t: any, i: number) => (
               <TransactionRow key={t._id} transaction={t} index={i} />

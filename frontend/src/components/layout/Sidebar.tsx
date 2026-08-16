@@ -20,6 +20,25 @@ const navItems = [
   { to: '/notifications',label: 'Notifications',icon: Bell },
 ]
 
+const pagePreloaders: Record<string, () => Promise<any>> = {
+  '/dashboard': () => import('../../pages/DashboardPage'),
+  '/transactions': () => import('../../pages/TransactionsPage'),
+  '/analytics': () => import('../../pages/AnalyticsPage'),
+  '/budgets': () => import('../../pages/BudgetsPage'),
+  '/goals': () => import('../../pages/GoalsPage'),
+  '/recurring': () => import('../../pages/RecurringPage'),
+  '/ai': () => import('../../pages/AIAdvisorPage'),
+  '/notifications': () => import('../../pages/NotificationsPage'),
+  '/settings': () => import('../../pages/SettingsPage'),
+  '/admin': () => import('../../pages/AdminPage'),
+}
+
+const prefetchRoute = (path: string) => {
+  if (pagePreloaders[path]) {
+    pagePreloaders[path]().catch(() => {})
+  }
+}
+
 interface SidebarProps {
   mobileOpen: boolean
   onMobileClose: () => void
@@ -80,6 +99,8 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               `nav-link ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-3' : ''}`
             }
             title={collapsed ? label : undefined}
+            onMouseEnter={() => prefetchRoute(to)}
+            onTouchStart={() => prefetchRoute(to)}
             onClick={onMobileClose}
           >
             <Icon className="w-5 h-5 flex-shrink-0" />
@@ -97,6 +118,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             </AnimatePresence>
           </NavLink>
         ))}
+
 
         {user?.role === 'admin' && user?.email?.toLowerCase().trim() === 'sparshchauhan050@gmail.com' && (
           <NavLink

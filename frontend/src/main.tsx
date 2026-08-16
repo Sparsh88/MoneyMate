@@ -6,17 +6,48 @@ import { Toaster } from 'react-hot-toast'
 import App from './App'
 import './index.css'
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 60 * 1000, // 1 minute fresh time by default
-      gcTime: 10 * 60 * 1000, // 10 minutes cache retention
+      staleTime: 3 * 60 * 1000, // 3 minutes fresh cache time
+      gcTime: 20 * 60 * 1000, // 20 minutes garbage collection
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
     },
   },
 })
+
+// Instant Backend Pre-warming & Keep-Alive to eliminate Render free tier cold start delay
+const prewarmBackend = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '/api' : 'http://localhost:5000/api')
+  const healthUrl = apiUrl.replace(/\/api\/?$/, '') + '/health'
+
+  fetch(healthUrl, { method: 'GET', keepalive: true }).catch(() => {
+    // Fallback attempt to /api/health
+    fetch(`${apiUrl}/health`, { method: 'GET', keepalive: true }).catch(() => {})
+  })
+}
+
+// Fire pre-warm immediately on script load
+prewarmBackend()
+
+// Maintain keep-alive every 10 minutes while user is on the tab
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      prewarmBackend()
+    }
+  }, 10 * 60 * 1000)
+
+  // Re-ping when tab becomes visible again
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      prewarmBackend()
+    }
+  })
+}
+
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

@@ -175,6 +175,172 @@ export const getTrends = async (req: AuthRequest, res: Response, next: NextFunct
   }
 };
 
+export const getUnifiedDashboard = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user?.id);
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1, 0, 0, 0, 0);
+
+    // Run all dashboard queries in a single parallel batch
+    const [
+      overallSummary,
+      monthlySummary,
+      recentTransactions,
+      categorySummary,
+      trendSummary,
+      budgets,
+    ] = await Promise.all([
+      // 1. Lifetime Income / Expense
+      Transaction.aggregate([
+        { $match: { user: userId } },
+        {
+          $group: {
+            _id: null,
+            totalIncome: { $sum: { $cond: [{ $eq: ['$type', 'income'] }, '$amount', 0] } },
+            totalExpense: { $sum: { $cond: [{ $eq: ['$type', 'expense'] }, '$amount', 0] } },
+          },
+        },
+      ]),
+      // 2. Current Month Income / Expense
+      Transaction.aggregate([
+        { $match: { user: userId, date: { $gte: startOfMonth, $lte: endOfMonth } } },
+        {
+          $group: {
+            _id: null,
+            monthlyIncome: { $sum: { $cond: [{ $eq: ['$type', 'income'] }, '$amount', 0] } },
+            monthlyExpense: { $sum: { $cond: [{ $eq: ['$type', 'expense'] }, '$amount', 0] } },
+          },
+        },
+      ]),
+      // 3. Recent Transactions
+      Transaction.find({ user: userId })
+        .select('amount type category date description receiptUrl isRecurring notes createdAt')
+        .populate('category', 'name icon color type')
+        .sort({ date: -1, createdAt: -1 })
+        .limit(5)
+        .lean(),
+      // 4. Current Month Category Expenses
+      Transaction.aggregate([
+        { $match: { user: userId, type: 'expense', date: { $gte: startOfMonth, $lte: endOfMonth } } },
+        { $group: { _id: '$category', total: { $sum: '$amount' } } },
+      ]),
+      // 5. 6-Month Trends
+      Transaction.aggregate([
+        { $match: { user: userId, date: { $gte: sixMonthsAgo } } },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$date' },
+              month: { $month: '$date' },
+            },
+            income: { $sum: { $cond: [{ $eq: ['$type', 'income'] }, '$amount', 0] } },
+            expense: { $sum: { $cond: [{ $eq: ['$type', 'expense'] }, '$amount', 0] } },
+          },
+        },
+      ]),
+      // 6. Current Month Budgets
+      Budget.find({ user: userId, month: currentMonth, year: currentYear })
+        .populate('category', 'name icon color')
+        .lean(),
+    ]);
+
+    // Compute summary stats
+    const lifeIncome = overallSummary[0]?.totalIncome || 0;
+    const lifeExpense = overallSummary[0]?.totalExpense || 0;
+    const balance = lifeIncome - lifeExpense;
+
+    const monthlyIncome = monthlySummary[0]?.monthlyIncome || 0;
+    const monthlyExpense = monthlySummary[0]?.monthlyExpense || 0;
+    const monthlySavings = monthlyIncome - monthlyExpense;
+
+    const summary = {
+      balance,
+      totalIncome: lifeIncome,
+      totalExpense: lifeExpense,
+      monthlyIncome,
+      monthlyExpense,
+      monthlySavings,
+    };
+
+    // Format category spending
+    let categorySpending: { name: string; value: number; color: string }[] = [];
+    const categoryExpenseMap = new Map<string, number>();
+    let totalCurrentMonthExpense = 0;
+
+    if (categorySummary.length > 0) {
+      const populatedCategories = await Category.populate(categorySummary, {
+        path: '_id',
+        select: 'name color icon type',
+      });
+      categorySpending = populatedCategories.map((item: any) => ({
+        name: item._id?.name || 'Uncategorized',
+        value: item.total,
+        color: item._id?.color || '#10b981',
+      }));
+
+      categorySummary.forEach((c: any) => {
+        if (c._id) {
+          categoryExpenseMap.set(c._id.toString(), c.total);
+        }
+        totalCurrentMonthExpense += c.total;
+      });
+    }
+
+    // Format 6-month trends
+    const trendMap = new Map<string, { income: number; expense: number }>();
+    trendSummary.forEach((t: any) => {
+      const key = `${t._id.year}-${t._id.month}`;
+      trendMap.set(key, { income: t.income || 0, expense: t.expense || 0 });
+    });
+
+    const incomeVsExpense = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+      const record = trendMap.get(key) || { income: 0, expense: 0 };
+      incomeVsExpense.push({
+        month: d.toLocaleString('default', { month: 'short' }),
+        income: record.income,
+        expense: record.expense,
+      });
+    }
+
+    // Format budget comparison
+    const budgetComparison = budgets.map((b: any) => {
+      const catId = b.category?._id ? b.category._id.toString() : b.category ? b.category.toString() : null;
+      const actual = catId ? categoryExpenseMap.get(catId) || 0 : totalCurrentMonthExpense;
+      const limit = b.amount;
+      const percent = limit > 0 ? Math.min(Math.round((actual / limit) * 100), 100) : 0;
+
+      return {
+        categoryName: b.category?.name || 'Overall Budget',
+        limit,
+        actual,
+        percent,
+      };
+    });
+
+    // Set lightweight Cache-Control header (stale-while-revalidate for 15s)
+    res.setHeader('Cache-Control', 'private, max-age=10, stale-while-revalidate=30');
+
+    res.status(200).json({
+      success: true,
+      summary,
+      recentTransactions,
+      categorySpending,
+      incomeVsExpense,
+      budgetComparison,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getCashFlow = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user?.id);
@@ -225,4 +391,5 @@ export const getCashFlow = async (req: AuthRequest, res: Response, next: NextFun
     next(error);
   }
 };
+
 
